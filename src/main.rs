@@ -1,17 +1,3 @@
-// Welcome to the program which you can learn your favourite poems by heart.
-// This program has a few steps
-// 1. Read the poem from a file
-// 2. Make sure the user reads it at least 3 times (each one identified by pressing enter)
-// 3. Seperate the poem by double newlines
-// 4. Remove more and more random characters from the poem piece by piece
-// When the user is ready, he can choose to only show the first letter of each word
-// The user always can choose to see the whole poem again
-// If the user is ready, he is asked to type the poem from memory
-// If the user is 95% correct, he is congratulated
-// If the user is less than 95% correct, he is asked to try again
-
-// The poem is stored in a file called poem.txt
-
 use std::env;
 use std::fs;
 
@@ -21,13 +7,6 @@ use std::io::stdout;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crossterm::{style::Stylize, terminal, ExecutableCommand};
-
-fn remove_last_line() {
-    // Move the cursor up to remove the user newline
-    print!("{}[1A", 27 as char);
-    // Remove the line
-    print!("{}[2K", 27 as char);
-}
 
 fn replace_with_underlines(input: String, percentage: u8) -> String {
     let mut rng = rand::thread_rng();
@@ -40,6 +19,7 @@ fn replace_with_underlines(input: String, percentage: u8) -> String {
     let mut output = String::new();
     let mut index = 0;
 
+    // Check if the string is a letter
     for grapheme in UnicodeSegmentation::graphemes(input.as_str(), true) {
         if replacement_indices.contains(&index) && grapheme.chars().all(char::is_alphabetic) {
             output.push('_');
@@ -74,7 +54,7 @@ fn main() {
             println!("Line 5");
             println!("Line 6");
             println!("");
-            println!("It is important that there are two newlines between each poem piece.");
+            println!("It is important that there are two newlines between each poem piece. The program will work without them, but it will be less effective.");
             // Wait for the user to press enter
             while !device_state.get_keys().contains(&Keycode::Enter) {
                 // Do nothing
@@ -85,34 +65,37 @@ fn main() {
     let poem = poem.trim().to_string();
 
     // Welcome message
-    println!("Welcome to the poem learning program!");
-    println!("This program will help you learn your favourite poems by heart.");
-    println!("First, please read the poem below at least 3 times.");
+    println!("{}", "Welcome to the poem learning program!".green());
+    println!(
+        "{}",
+        "This program will help you learn your favourite poems by heart.".green()
+    );
+    println!(
+        "{}",
+        "First, please read the poem below at least 3 times.".green()
+    );
 
     // Print the poem
     println!("{}", poem);
     println!("");
 
     'main: loop {
-        // Wait for the user to press enter 3 times. Remove the user input after each press
-        for i in 0..3 {
-            // Wait for the user to release enter
-            while device_state.get_keys().contains(&Keycode::Enter) {
-                // Do nothing
-            }
-            let msg = format!(
-                "Press enter to confirm that you have read the poem. ({}/3)",
-                i + 1
-            );
-            println!("{}", msg.green());
+        let msg = format!("Press enter to confirm that you have read the poem.");
+        println!("{}", msg.green());
 
-            // Wait for the user to press enter
-            while !device_state.get_keys().contains(&Keycode::Enter) {
-                // Do nothing
-            }
-            // Clear the user input
-            remove_last_line();
+        // Wait for the user to release enter
+        while device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
         }
+
+        // Wait for the user to press enter
+        while !device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+        // Clear the terminal
+        stdout()
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
 
         stdout()
             .execute(terminal::Clear(terminal::ClearType::All))
@@ -120,12 +103,15 @@ fn main() {
 
         println!(
             "{}",
-            "Great job! Now let's start learning the poem by heart.\n
-This process will take some time so don't worry if you don't get it right away.\n
-Drink some water and let's get started!\n
-Press enter to continue.\n"
+            "Great job! Now let's start learning the poem by heart.".green()
+        );
+        println!(
+            "{}",
+            "This process will take some time so don't worry if you don't get it right away."
                 .green()
         );
+        println!("{}", "Drink some water and let's get started!".green());
+        println!("{}", "Press enter to continue.".green());
 
         // Wait for the user to release enter
         while device_state.get_keys().contains(&Keycode::Enter) {
