@@ -93,7 +93,7 @@ fn main() {
     println!("{}", poem);
     println!("");
 
-    'program: loop {
+    'main: loop {
         // Wait for the user to press enter 3 times. Remove the user input after each press
         for i in 0..3 {
             // Wait for the user to release enter
@@ -377,7 +377,7 @@ Press enter to continue.\n"
             // Do nothing
         }
         if device_state.get_keys().contains(&Keycode::Escape) {
-            break 'program;
+            break 'main;
         }
     }
 }
