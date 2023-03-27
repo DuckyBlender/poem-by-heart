@@ -19,6 +19,8 @@ use std::io;
 use rand::Rng;
 
 use device_query::{DeviceQuery, DeviceState, Keycode};
+use rand::seq::SliceRandom;
+use unicode_segmentation::UnicodeSegmentation;
 
 fn remove_input() {
     // Move the cursor up to remove the user newline
@@ -31,49 +33,34 @@ fn remove_input() {
     print!("{}[2K", 27 as char);
 }
 
-fn is_polish_letter(c: char) -> bool {
-    let c = c.to_lowercase().next().unwrap();
-    return c == 'ą'
-        || c == 'ć'
-        || c == 'ę'
-        || c == 'ł'
-        || c == 'ń'
-        || c == 'ó'
-        || c == 'ś'
-        || c == 'ź'
-        || c == 'ż';
-}
-
-fn is_letter(c: char) -> bool {
-    let c = c.to_lowercase().next().unwrap();
-    return (c >= 'a' && c <= 'z') || is_polish_letter(c);
-}
-
 fn replace_with_underlines(input: String, percentage: u8) -> String {
-    if percentage > 100 {
-        panic!("Percentage should be between 0 and 100.");
-    }
-
     let mut rng = rand::thread_rng();
-    let mut chars: Vec<char> = input.chars().collect();
-    let letter_count = chars.iter().filter(|&&c| is_letter(c)).count();
-    let mut chars_to_replace = (letter_count * percentage as usize + 50) / 100;
+    let num_replacements = input.chars().count() * (percentage as usize) / 100;
 
-    for i in 0..chars.len() {
-        if is_letter(chars[i]) && rng.gen_range(0..letter_count) < chars_to_replace {
-            chars[i] = '_';
-            chars_to_replace -= 1;
+    let mut replacement_indices: Vec<usize> = (0..input.chars().count()).collect();
+    replacement_indices.shuffle(&mut rng);
+    let replacement_indices = &replacement_indices[0..num_replacements];
+
+    let mut output = String::new();
+    let mut index = 0;
+
+    for grapheme in UnicodeSegmentation::graphemes(input.as_str(), true) {
+        if replacement_indices.contains(&index) && grapheme.chars().all(char::is_alphabetic) {
+            output.push('_');
+        } else {
+            output.push_str(grapheme);
         }
+        index += 1;
     }
 
-    return chars.into_iter().collect();
+    output
 }
 
 fn main() {
     // Set the backtrace environment variable to 1
     env::set_var("RUST_BACKTRACE", "1");
 
-    let device_state = DeviceState::new(); // To see the user input without pressing enter
+    // let device_state = DeviceState::new(); // To see the user input without pressing enter
 
     // Get the poem
     let poem = match fs::read_to_string("poem.txt") {
@@ -113,6 +100,7 @@ fn main() {
         remove_input();
     }
 
+    println!("");
     println!("Great job! Now let's start learning the poem by heart.");
     println!("This process will take some time so don't worry if you don't get it right away.");
     println!("");
@@ -122,6 +110,7 @@ fn main() {
     let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
 
     println!("The poem has {} pieces.", poem_pieces.len());
+    println!("");
 
     // Seperate the poem into pieces
     for i in 0..poem_pieces.len() {
@@ -138,18 +127,19 @@ fn main() {
 
         // Replace 1% of random characters from the poem with an underline, incrementing by 1% each time the user presses enter
         let poem_piece = poem_pieces[i].to_string();
-        let mut modified_poem_piece = poem_piece.clone();
 
         // Replace 1% more of the characters each time
         for replace_percentage in 0..100 {
             // Replace random characters with a underline. Make sure that the character is not a newline, space or underscore or a comma. If so, skip it and try again. Keep in mind the replace_percentage
-            modified_poem_piece = replace_with_underlines(modified_poem_piece, replace_percentage);
+            let modified_poem_piece =
+                replace_with_underlines(poem_piece.clone(), replace_percentage);
 
             // Show the poem
             println!(
-                "Here is the {} piece of the poem with {}% of the characters hidden:",
+                "Here is piece number {}/{} of the poem with {}% of the characters hidden:",
                 i + 1,
-                replace_percentage + 1
+                poem_pieces.len(),
+                replace_percentage
             );
             println!("{}", modified_poem_piece);
             println!("");
@@ -162,5 +152,10 @@ fn main() {
 
             remove_input();
         }
+
+        // Show the whole poem
+        println!("Here is the full {} piece of the poem:", i + 1);
+        println!("");
+        println!("{}", poem_pieces[i]);
     }
 }
