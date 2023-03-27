@@ -14,20 +14,13 @@
 
 use std::env;
 use std::fs;
-use std::io;
-
-use rand::Rng;
 
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use rand::seq::SliceRandom;
 use unicode_segmentation::UnicodeSegmentation;
 
-fn remove_input() {
+fn remove_last_line() {
     // Move the cursor up to remove the user newline
-    print!("{}[1A", 27 as char);
-    // Remove the line
-    print!("{}[2K", 27 as char);
-    // Move the cursor up to remove the prompt
     print!("{}[1A", 27 as char);
     // Remove the line
     print!("{}[2K", 27 as char);
@@ -60,7 +53,7 @@ fn main() {
     // Set the backtrace environment variable to 1
     env::set_var("RUST_BACKTRACE", "1");
 
-    // let device_state = DeviceState::new(); // To see the user input without pressing enter
+    let device_state = DeviceState::new(); // To see the user input without pressing enter
 
     // Get the poem
     let poem = match fs::read_to_string("poem.txt") {
@@ -83,6 +76,11 @@ fn main() {
     };
     let poem = poem.trim().to_string();
 
+    // Welcome message
+    println!("Welcome to the poem learning program!");
+    println!("This program will help you learn your favourite poems by heart.");
+    println!("First, please read the poem below at least 3 times.");
+
     // Print the poem
     println!("{}", poem);
     println!("");
@@ -90,72 +88,134 @@ fn main() {
     // Wait for the user to press enter 3 times. Remove the user input after each press
 
     for i in 0..3 {
+        // Wait for the user to release enter
+        while device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
         println!(
             "Press enter to confirm that you have read the poem. ({}/3)",
             i + 1
         );
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
+        // let mut input = String::new();
+        // io::stdin().read_line(&mut input).unwrap();
 
-        remove_input();
+        // remove_input();
+
+        // This code is replaced with the device_query implementation below
+
+        // Wait for the user to press enter
+        while !device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+        // Clear the user input
+        remove_last_line();
     }
 
-    println!("");
+    print!("\x1B[2J\x1B[1;1H");
     println!("Great job! Now let's start learning the poem by heart.");
     println!("This process will take some time so don't worry if you don't get it right away.");
-    println!("");
+    println!("Drink some water and let's get started!");
+    println!("Press enter to continue.");
+
+    // Wait for the user to release enter
+    while device_state.get_keys().contains(&Keycode::Enter) {
+        // Do nothing
+    }
+
+    // Wait for the user to press enter
+    while !device_state.get_keys().contains(&Keycode::Enter) {
+        // Do nothing
+    }
+
+    // Clear the terminal
+    print!("\x1B[2J\x1B[1;1H");
 
     // Split the poem into pieces
-    //let poem_pieces: Vec<&str> = poem.split("\n\n").collect();
     let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
-
-    println!("The poem has {} pieces.", poem_pieces.len());
-    println!("");
 
     // Seperate the poem into pieces
     for i in 0..poem_pieces.len() {
+        // Wait for the user to release enter
+        while device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+
         // Show the whole poem
-        println!("Here is the {} piece of the poem:", i + 1);
+        if i != 0 {
+            println!("Great work!");
+        }
+        println!(
+            "Here is piece number {}/{} of the poem:\n",
+            i + 1,
+            poem_pieces.len()
+        );
         println!("{}", poem_pieces[i]);
         println!("");
         println!("Press enter to continue when ready.");
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-
-        remove_input();
+        // Wait for the user to press enter
+        while !device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+        // Clear the terminal
+        print!("\x1B[2J\x1B[1;1H");
 
         // Replace 1% of random characters from the poem with an underline, incrementing by 1% each time the user presses enter
         let poem_piece = poem_pieces[i].to_string();
 
         // Replace 1% more of the characters each time
-        for replace_percentage in 0..100 {
+        for replace_percentage in 0..25 {
+            let replace_percentage = (replace_percentage + 1) * 4;
+            // Wait for the user to release enter
+            while device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
+
             // Replace random characters with a underline. Make sure that the character is not a newline, space or underscore or a comma. If so, skip it and try again. Keep in mind the replace_percentage
             let modified_poem_piece =
                 replace_with_underlines(poem_piece.clone(), replace_percentage);
 
-            // Show the poem
-            println!(
-                "Here is piece number {}/{} of the poem with {}% of the characters hidden:",
-                i + 1,
-                poem_pieces.len(),
-                replace_percentage
-            );
-            println!("{}", modified_poem_piece);
-            println!("");
-            println!("Press enter to continue when ready.");
+            'choice: loop {
+                // Show the poem
+                println!(
+                    "Here is piece number {}/{} of the poem with {}% of the characters hidden:",
+                    i + 1,
+                    poem_pieces.len(),
+                    replace_percentage
+                );
+                println!(
+                    "{}\n\nPress enter to continue when ready. If you are unsure, press \"a\".",
+                    modified_poem_piece
+                );
 
-            let mut input = String::new();
-            io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read line");
+                // Wait for the user to press enter or a
+                while !device_state.get_keys().contains(&Keycode::Enter)
+                    && !device_state.get_keys().contains(&Keycode::A)
+                {
+                    // Do nothing
+                }
 
-            remove_input();
+                // Check if the user pressed enter or a
+                if device_state.get_keys().contains(&Keycode::Enter) {
+                    // Clear the terminal
+                    print!("\x1B[2J\x1B[1;1H");
+                    break 'choice;
+                } else if device_state.get_keys().contains(&Keycode::A) {
+                    // Clear the terminal
+                    print!("\x1B[2J\x1B[1;1H");
+                    println!("Here is the answer:");
+                    println!("{}\n\nUnpress \"a\" to continue", poem_piece);
+                    // Wait for the user to unpress "a"
+                    while device_state.get_keys().contains(&Keycode::A) {
+                        // Do nothing
+                    }
+                    // Clear the terminal
+                    print!("\x1B[2J\x1B[1;1H");
+                }
+
+                // Clear the terminal
+                print!("\x1B[2J\x1B[1;1H");
+            }
         }
-
-        // Show the whole poem
-        println!("Here is the full {} piece of the poem:", i + 1);
-        println!("");
-        println!("{}", poem_pieces[i]);
     }
 }
