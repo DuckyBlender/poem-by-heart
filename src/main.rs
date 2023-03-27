@@ -17,7 +17,10 @@ use std::fs;
 
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use rand::seq::SliceRandom;
+use std::io::stdout;
 use unicode_segmentation::UnicodeSegmentation;
+
+use crossterm::{style::Stylize, terminal, ExecutableCommand};
 
 fn remove_last_line() {
     // Move the cursor up to remove the user newline
@@ -59,7 +62,8 @@ fn main() {
     let poem = match fs::read_to_string("poem.txt") {
         Ok(poem) => poem,
         Err(_) => {
-            println!("Could not read the poem! Please make sure that poem.txt is in the same folder as the executable.");
+            println!("{}", "Could not read the poem!".red());
+            println!("Please make sure that poem.txt is in the same folder as the executable.");
             println!("Keep in mind that the poem structure should be as follows:");
             println!("Line 1");
             println!("Line 2");
@@ -71,6 +75,10 @@ fn main() {
             println!("Line 6");
             println!("");
             println!("It is important that there are two newlines between each poem piece.");
+            // Wait for the user to press enter
+            while !device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
             return;
         }
     };
@@ -92,16 +100,11 @@ fn main() {
         while device_state.get_keys().contains(&Keycode::Enter) {
             // Do nothing
         }
-        println!(
+        let msg = format!(
             "Press enter to confirm that you have read the poem. ({}/3)",
             i + 1
         );
-        // let mut input = String::new();
-        // io::stdin().read_line(&mut input).unwrap();
-
-        // remove_input();
-
-        // This code is replaced with the device_query implementation below
+        println!("{}", msg.green());
 
         // Wait for the user to press enter
         while !device_state.get_keys().contains(&Keycode::Enter) {
@@ -111,11 +114,18 @@ fn main() {
         remove_last_line();
     }
 
-    print!("\x1B[2J\x1B[1;1H");
-    println!("Great job! Now let's start learning the poem by heart.");
-    println!("This process will take some time so don't worry if you don't get it right away.");
-    println!("Drink some water and let's get started!");
-    println!("Press enter to continue.");
+    stdout()
+        .execute(terminal::Clear(terminal::ClearType::All))
+        .unwrap();
+
+    println!(
+        "{}",
+        "Great job! Now let's start learning the poem by heart.\n
+This process will take some time so don't worry if you don't get it right away.\n
+Drink some water and let's get started!\n
+Press enter to continue.\n"
+            .green()
+    );
 
     // Wait for the user to release enter
     while device_state.get_keys().contains(&Keycode::Enter) {
@@ -128,37 +138,53 @@ fn main() {
     }
 
     // Clear the terminal
-    print!("\x1B[2J\x1B[1;1H");
+    stdout()
+        .execute(terminal::Clear(terminal::ClearType::All))
+        .unwrap();
 
     // Split the poem into pieces
     let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
+    if poem_pieces.len() == 1 {
+        println!("{}", "===\nWARNING! The poem is not split into pieces. This program will work best if the poem is split into pieces by double newlines.\n===\n".red());
+        println!("Press enter to continue...");
+        // Wait for the user to press enter
+        while !device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+        return;
+    }
 
     // Seperate the poem into pieces
     for i in 0..poem_pieces.len() {
         // Wait for the user to release enter
-        while device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
 
         // Show the whole poem
         if i != 0 {
-            println!("Great work!");
+            println!("{}", "Great work!".green());
         }
-        println!(
+        let msg = format!(
             "Here is piece number {}/{} of the poem:\n",
             i + 1,
             poem_pieces.len()
         );
+        println!("{}", msg.green());
+
         println!("{}", poem_pieces[i]);
-        println!("");
-        println!("Press enter to continue when ready.");
+
+        println!("{}", "\nPress enter to continue when ready.".green());
+
+        while device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
 
         // Wait for the user to press enter
         while !device_state.get_keys().contains(&Keycode::Enter) {
             // Do nothing
         }
         // Clear the terminal
-        print!("\x1B[2J\x1B[1;1H");
+        stdout()
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
 
         // Replace 1% of random characters from the poem with an underline, incrementing by 1% each time the user presses enter
         let poem_piece = poem_pieces[i].to_string();
@@ -166,10 +192,6 @@ fn main() {
         // Replace 1% more of the characters each time
         for replace_percentage in 0..25 {
             let replace_percentage = (replace_percentage + 1) * 4;
-            // Wait for the user to release enter
-            while device_state.get_keys().contains(&Keycode::Enter) {
-                // Do nothing
-            }
 
             // Replace random characters with a underline. Make sure that the character is not a newline, space or underscore or a comma. If so, skip it and try again. Keep in mind the replace_percentage
             let modified_poem_piece =
@@ -177,16 +199,26 @@ fn main() {
 
             'choice: loop {
                 // Show the poem
-                println!(
+                let msg = format!(
                     "Here is piece number {}/{} of the poem with {}% of the characters hidden:",
                     i + 1,
                     poem_pieces.len(),
                     replace_percentage
                 );
+
+                println!("{}", msg.green());
+
+                println!("\n{}\n\n", modified_poem_piece);
+
                 println!(
-                    "{}\n\nPress enter to continue when ready. If you are unsure, press \"a\".",
-                    modified_poem_piece
+                    "{}",
+                    "Press enter to continue when ready. If you are unsure, press \"a\"".green()
                 );
+
+                // Wait for the user to release enter
+                while device_state.get_keys().contains(&Keycode::Enter) {
+                    // Do nothing
+                }
 
                 // Wait for the user to press enter or a
                 while !device_state.get_keys().contains(&Keycode::Enter)
@@ -198,11 +230,15 @@ fn main() {
                 // Check if the user pressed enter or a
                 if device_state.get_keys().contains(&Keycode::Enter) {
                     // Clear the terminal
-                    print!("\x1B[2J\x1B[1;1H");
+                    stdout()
+                        .execute(terminal::Clear(terminal::ClearType::All))
+                        .unwrap();
                     break 'choice;
                 } else if device_state.get_keys().contains(&Keycode::A) {
                     // Clear the terminal
-                    print!("\x1B[2J\x1B[1;1H");
+                    stdout()
+                        .execute(terminal::Clear(terminal::ClearType::All))
+                        .unwrap();
                     println!("Here is the answer:");
                     println!("{}\n\nUnpress \"a\" to continue", poem_piece);
                     // Wait for the user to unpress "a"
@@ -210,11 +246,15 @@ fn main() {
                         // Do nothing
                     }
                     // Clear the terminal
-                    print!("\x1B[2J\x1B[1;1H");
+                    stdout()
+                        .execute(terminal::Clear(terminal::ClearType::All))
+                        .unwrap();
                 }
 
                 // Clear the terminal
-                print!("\x1B[2J\x1B[1;1H");
+                stdout()
+                    .execute(terminal::Clear(terminal::ClearType::All))
+                    .unwrap();
             }
         }
     }
