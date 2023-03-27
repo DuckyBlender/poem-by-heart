@@ -241,7 +241,7 @@ Press enter to continue.\n"
                             .execute(terminal::Clear(terminal::ClearType::All))
                             .unwrap();
                         println!("{}", "Here is the answer:\n".green());
-                        println!("{}\n", poem_piece);
+                        println!("{}\n\n", poem_piece);
                         println!("{}", "Unpress \"a\" to continue.".green());
                         // Wait for the user to unpress "a"
                         while device_state.get_keys().contains(&Keycode::A) {
@@ -333,7 +333,7 @@ Press enter to continue.\n"
                         .execute(terminal::Clear(terminal::ClearType::All))
                         .unwrap();
                     println!("{}", "Here is the answer:\n".green());
-                    println!("{}\n", poem);
+                    println!("{}\n\n", poem);
                     println!("{}", "Unpress \"a\" to continue.".green());
                     // Wait for the user to unpress "a"
                     while device_state.get_keys().contains(&Keycode::A) {
