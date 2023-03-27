@@ -93,86 +93,41 @@ fn main() {
     println!("{}", poem);
     println!("");
 
-    // Wait for the user to press enter 3 times. Remove the user input after each press
+    'program: loop {
+        // Wait for the user to press enter 3 times. Remove the user input after each press
+        for i in 0..3 {
+            // Wait for the user to release enter
+            while device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
+            let msg = format!(
+                "Press enter to confirm that you have read the poem. ({}/3)",
+                i + 1
+            );
+            println!("{}", msg.green());
 
-    for i in 0..3 {
-        // Wait for the user to release enter
-        while device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
+            // Wait for the user to press enter
+            while !device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
+            // Clear the user input
+            remove_last_line();
         }
-        let msg = format!(
-            "Press enter to confirm that you have read the poem. ({}/3)",
-            i + 1
-        );
-        println!("{}", msg.green());
 
-        // Wait for the user to press enter
-        while !device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
-        // Clear the user input
-        remove_last_line();
-    }
+        stdout()
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
 
-    stdout()
-        .execute(terminal::Clear(terminal::ClearType::All))
-        .unwrap();
-
-    println!(
-        "{}",
-        "Great job! Now let's start learning the poem by heart.\n
+        println!(
+            "{}",
+            "Great job! Now let's start learning the poem by heart.\n
 This process will take some time so don't worry if you don't get it right away.\n
 Drink some water and let's get started!\n
 Press enter to continue.\n"
-            .green()
-    );
-
-    // Wait for the user to release enter
-    while device_state.get_keys().contains(&Keycode::Enter) {
-        // Do nothing
-    }
-
-    // Wait for the user to press enter
-    while !device_state.get_keys().contains(&Keycode::Enter) {
-        // Do nothing
-    }
-
-    // Clear the terminal
-    stdout()
-        .execute(terminal::Clear(terminal::ClearType::All))
-        .unwrap();
-
-    // Split the poem into pieces
-    let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
-    if poem_pieces.len() == 1 {
-        println!("{}", "===\nWARNING! The poem is not split into pieces. This program will work best if the poem is split into pieces by double newlines.\n===\n".red());
-        println!("Press enter to continue...");
-        // Wait for the user to press enter
-        while !device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
-        return;
-    }
-
-    // Seperate the poem into pieces
-    for i in 0..poem_pieces.len() {
-        // Wait for the user to release enter
-
-        // Show the whole poem
-        if i != 0 {
-            println!("{}", "Great work!".green());
-        }
-        let msg = format!(
-            "Here is piece number {}/{} of the poem:\n",
-            i + 1,
-            poem_pieces.len()
+                .green()
         );
-        println!("{}", msg.green());
 
-        println!("{}", poem_pieces[i]);
-
-        println!("{}", "\nPress enter to continue when ready.".green());
-
+        // Wait for the user to release enter
         while device_state.get_keys().contains(&Keycode::Enter) {
             // Do nothing
         }
@@ -181,38 +136,176 @@ Press enter to continue.\n"
         while !device_state.get_keys().contains(&Keycode::Enter) {
             // Do nothing
         }
+
+        // Clear the terminal
+        stdout()
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
+
+        // Split the poem into pieces
+        let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
+        if poem_pieces.len() == 1 {
+            println!("{}", "===\nWARNING! The poem is not split into pieces. This program will work best if the poem is split into pieces by double newlines.\n===\n".red());
+            println!("Press enter to continue...");
+            // Wait for the user to press enter
+            while !device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
+            return;
+        }
+
+        // Seperate the poem into pieces
+        for i in 0..poem_pieces.len() {
+            // Wait for the user to release enter
+
+            // Show the whole poem
+            if i != 0 {
+                println!("{}", "Great work!".green());
+            }
+            let msg = format!(
+                "Here is piece number {}/{} of the poem:\n",
+                i + 1,
+                poem_pieces.len()
+            );
+            println!("{}", msg.green());
+
+            println!("{}", poem_pieces[i]);
+
+            println!("{}", "\nPress enter to continue when ready.".green());
+
+            while device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
+
+            // Wait for the user to press enter
+            while !device_state.get_keys().contains(&Keycode::Enter) {
+                // Do nothing
+            }
+            // Clear the terminal
+            stdout()
+                .execute(terminal::Clear(terminal::ClearType::All))
+                .unwrap();
+
+            // Replace 1% of random characters from the poem with an underline, incrementing by 1% each time the user presses enter
+            let poem_piece = poem_pieces[i].to_string();
+
+            // Replace 1% more of the characters each time
+            for replace_percentage in 0..25 {
+                let replace_percentage = (replace_percentage + 1) * 4;
+
+                // Replace random characters with a underline. Make sure that the character is not a newline, space or underscore or a comma. If so, skip it and try again. Keep in mind the replace_percentage
+                let modified_poem_piece =
+                    replace_with_underlines(poem_piece.clone(), replace_percentage);
+
+                'choice: loop {
+                    // Show the poem
+                    let msg = format!(
+                        "Here is piece number {}/{} of the poem with {}% of the characters hidden:",
+                        i + 1,
+                        poem_pieces.len(),
+                        replace_percentage
+                    );
+
+                    println!("{}", msg.green());
+
+                    println!("\n{}\n\n", modified_poem_piece);
+
+                    println!(
+                        "{}",
+                        "Press enter to continue when ready. If you are unsure, press \"a\"."
+                            .green()
+                    );
+
+                    // Wait for the user to release enter
+                    while device_state.get_keys().contains(&Keycode::Enter) {
+                        // Do nothing
+                    }
+
+                    // Wait for the user to press enter or a
+                    while !device_state.get_keys().contains(&Keycode::Enter)
+                        && !device_state.get_keys().contains(&Keycode::A)
+                    {
+                        // Do nothing
+                    }
+
+                    // Check if the user pressed enter or a
+                    if device_state.get_keys().contains(&Keycode::Enter) {
+                        // Clear the terminal
+                        stdout()
+                            .execute(terminal::Clear(terminal::ClearType::All))
+                            .unwrap();
+                        break 'choice;
+                    } else if device_state.get_keys().contains(&Keycode::A) {
+                        // Clear the terminal
+                        stdout()
+                            .execute(terminal::Clear(terminal::ClearType::All))
+                            .unwrap();
+                        println!("{}", "Here is the answer:\n".green());
+                        println!("{}\n", poem_piece);
+                        println!("{}", "Unpress \"a\" to continue.".green());
+                        // Wait for the user to unpress "a"
+                        while device_state.get_keys().contains(&Keycode::A) {
+                            // Do nothing
+                        }
+                        // Clear the terminal
+                        stdout()
+                            .execute(terminal::Clear(terminal::ClearType::All))
+                            .unwrap();
+                    }
+
+                    // Clear the terminal
+                    stdout()
+                        .execute(terminal::Clear(terminal::ClearType::All))
+                        .unwrap();
+                }
+            }
+        }
+        // Make the same thing for all of the pieces
+        println!(
+            "{}",
+            "Great job! To finish off, let's see if you can remember the whole poem!".green()
+        );
+        println!("{}", "Press enter to continue.".green());
+
+        // Wait for the user to release enter
+        while device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+
+        // Wait for the user to press enter
+        while !device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+
         // Clear the terminal
         stdout()
             .execute(terminal::Clear(terminal::ClearType::All))
             .unwrap();
 
         // Replace 1% of random characters from the poem with an underline, incrementing by 1% each time the user presses enter
-        let poem_piece = poem_pieces[i].to_string();
+        let poem = poem.to_string();
 
         // Replace 1% more of the characters each time
         for replace_percentage in 0..25 {
             let replace_percentage = (replace_percentage + 1) * 4;
 
             // Replace random characters with a underline. Make sure that the character is not a newline, space or underscore or a comma. If so, skip it and try again. Keep in mind the replace_percentage
-            let modified_poem_piece =
-                replace_with_underlines(poem_piece.clone(), replace_percentage);
+            let modified_poem = replace_with_underlines(poem.clone(), replace_percentage);
 
             'choice: loop {
                 // Show the poem
                 let msg = format!(
-                    "Here is piece number {}/{} of the poem with {}% of the characters hidden:",
-                    i + 1,
-                    poem_pieces.len(),
+                    "Here is the entire poem with {}% of the characters hidden:",
                     replace_percentage
                 );
 
                 println!("{}", msg.green());
 
-                println!("\n{}\n\n", modified_poem_piece);
+                println!("\n{}\n\n", modified_poem);
 
                 println!(
                     "{}",
-                    "Press enter to continue when ready. If you are unsure, press \"a\"".green()
+                    "Press enter to continue when ready. If you are unsure, press \"a\".".green()
                 );
 
                 // Wait for the user to release enter
@@ -239,8 +332,9 @@ Press enter to continue.\n"
                     stdout()
                         .execute(terminal::Clear(terminal::ClearType::All))
                         .unwrap();
-                    println!("Here is the answer:");
-                    println!("{}\n\nUnpress \"a\" to continue", poem_piece);
+                    println!("{}", "Here is the answer:\n".green());
+                    println!("{}\n", poem);
+                    println!("{}", "Unpress \"a\" to continue.".green());
                     // Wait for the user to unpress "a"
                     while device_state.get_keys().contains(&Keycode::A) {
                         // Do nothing
@@ -256,6 +350,34 @@ Press enter to continue.\n"
                     .execute(terminal::Clear(terminal::ClearType::All))
                     .unwrap();
             }
+        }
+
+        // Clear the terminal
+        stdout()
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
+
+        println!(
+            "{}",
+            "Great job! You have memorized the entire poem!".green()
+        );
+        println!(
+            "{}",
+            "Press enter to restart the program. Press ESC to stop.".green()
+        );
+
+        // Wait for the user to release enter
+        while device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+
+        while !device_state.get_keys().contains(&Keycode::Enter)
+            && !device_state.get_keys().contains(&Keycode::Escape)
+        {
+            // Do nothing
+        }
+        if device_state.get_keys().contains(&Keycode::Escape) {
+            break 'program;
         }
     }
 }
