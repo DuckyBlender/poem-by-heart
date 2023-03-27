@@ -31,14 +31,42 @@ fn remove_input() {
     print!("{}[2K", 27 as char);
 }
 
-// Replace a percentage of random characters with an underline
-fn replace_with_newlines(input: String, percentage: u8) -> String {
-    let number_of_characters = input.chars().count();
-    let number_of_characters_to_replace =
-        (number_of_characters as f32 * (percentage as f32 / 100.0)) as u32;
+fn is_polish_letter(c: char) -> bool {
+    let c = c.to_lowercase().next().unwrap();
+    return c == 'ą'
+        || c == 'ć'
+        || c == 'ę'
+        || c == 'ł'
+        || c == 'ń'
+        || c == 'ó'
+        || c == 'ś'
+        || c == 'ź'
+        || c == 'ż';
+}
 
-    let mut modified_input = input.clone();
+fn is_letter(c: char) -> bool {
+    let c = c.to_lowercase().next().unwrap();
+    return (c >= 'a' && c <= 'z') || is_polish_letter(c);
+}
+
+fn replace_with_underlines(input: String, percentage: u8) -> String {
+    if percentage > 100 {
+        panic!("Percentage should be between 0 and 100.");
+    }
+
     let mut rng = rand::thread_rng();
+    let mut chars: Vec<char> = input.chars().collect();
+    let letter_count = chars.iter().filter(|&&c| is_letter(c)).count();
+    let mut chars_to_replace = (letter_count * percentage as usize + 50) / 100;
+
+    for i in 0..chars.len() {
+        if is_letter(chars[i]) && rng.gen_range(0..letter_count) < chars_to_replace {
+            chars[i] = '_';
+            chars_to_replace -= 1;
+        }
+    }
+
+    return chars.into_iter().collect();
 }
 
 fn main() {
@@ -115,7 +143,7 @@ fn main() {
         // Replace 1% more of the characters each time
         for replace_percentage in 0..100 {
             // Replace random characters with a underline. Make sure that the character is not a newline, space or underscore or a comma. If so, skip it and try again. Keep in mind the replace_percentage
-            modified_poem_piece = replace_with_newlines(modified_poem_piece, replace_percentage);
+            modified_poem_piece = replace_with_underlines(modified_poem_piece, replace_percentage);
 
             // Show the poem
             println!(
