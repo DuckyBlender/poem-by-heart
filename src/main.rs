@@ -72,7 +72,7 @@ fn main() {
     );
     println!(
         "{}",
-        "First, please read the poem below at least 3 times.".green()
+        "First, please read the poem below at least 3 times.\n".green()
     );
 
     // Print the poem
