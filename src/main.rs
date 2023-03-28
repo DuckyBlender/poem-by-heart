@@ -365,5 +365,9 @@ fn main() {
         if device_state.get_keys().contains(&Keycode::Escape) {
             break 'main;
         }
+        // Clear the terminal
+        stdout()
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
     }
 }
