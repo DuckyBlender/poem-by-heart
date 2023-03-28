@@ -79,72 +79,62 @@ fn main() {
     println!("{}", poem);
     println!("");
 
+    let msg = format!("Press enter to confirm that you have read the poem.");
+    println!("{}", msg.green());
+
+    // Wait for the user to release enter
+    while device_state.get_keys().contains(&Keycode::Enter) {
+        // Do nothing
+    }
+
+    // Wait for the user to press enter
+    while !device_state.get_keys().contains(&Keycode::Enter) {
+        // Do nothing
+    }
+    // Clear the terminal
+    stdout()
+        .execute(terminal::Clear(terminal::ClearType::All))
+        .unwrap();
+
+    println!(
+        "{}",
+        "Great job! Now let's start learning the poem by heart.".green()
+    );
+    println!(
+        "{}",
+        "This process will take some time so don't worry if you don't get it right away.".green()
+    );
+    println!("{}", "Drink some water and let's get started!".green());
+    println!("{}", "Press enter to continue.".green());
+
+    // Wait for the user to release enter
+    while device_state.get_keys().contains(&Keycode::Enter) {
+        // Do nothing
+    }
+
+    // Wait for the user to press enter
+    while !device_state.get_keys().contains(&Keycode::Enter) {
+        // Do nothing
+    }
+    // Clear the terminal
+    stdout()
+        .execute(terminal::Clear(terminal::ClearType::All))
+        .unwrap();
+
+    // Split the poem into pieces
+    let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
+    if poem_pieces.len() == 1 {
+        println!("{}", "===\nWARNING! The poem is not split into pieces. This program will work best if the poem is split into pieces by double newlines.\n===\n".red());
+        println!("Press enter to continue...");
+        // Wait for the user to press enter
+        while !device_state.get_keys().contains(&Keycode::Enter) {
+            // Do nothing
+        }
+        return;
+    }
     'main: loop {
-        let msg = format!("Press enter to confirm that you have read the poem.");
-        println!("{}", msg.green());
-
-        // Wait for the user to release enter
-        while device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
-
-        // Wait for the user to press enter
-        while !device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
-        // Clear the terminal
-        stdout()
-            .execute(terminal::Clear(terminal::ClearType::All))
-            .unwrap();
-
-        stdout()
-            .execute(terminal::Clear(terminal::ClearType::All))
-            .unwrap();
-
-        println!(
-            "{}",
-            "Great job! Now let's start learning the poem by heart.".green()
-        );
-        println!(
-            "{}",
-            "This process will take some time so don't worry if you don't get it right away."
-                .green()
-        );
-        println!("{}", "Drink some water and let's get started!".green());
-        println!("{}", "Press enter to continue.".green());
-
-        // Wait for the user to release enter
-        while device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
-
-        // Wait for the user to press enter
-        while !device_state.get_keys().contains(&Keycode::Enter) {
-            // Do nothing
-        }
-
-        // Clear the terminal
-        stdout()
-            .execute(terminal::Clear(terminal::ClearType::All))
-            .unwrap();
-
-        // Split the poem into pieces
-        let poem_pieces: Vec<&str> = poem.split("\r\n\r\n").collect();
-        if poem_pieces.len() == 1 {
-            println!("{}", "===\nWARNING! The poem is not split into pieces. This program will work best if the poem is split into pieces by double newlines.\n===\n".red());
-            println!("Press enter to continue...");
-            // Wait for the user to press enter
-            while !device_state.get_keys().contains(&Keycode::Enter) {
-                // Do nothing
-            }
-            return;
-        }
-
         // Seperate the poem into pieces
         for i in 0..poem_pieces.len() {
-            // Wait for the user to release enter
-
-            // Show the whole poem
             if i != 0 {
                 println!("{}", "Great work!".green());
             }
